@@ -25,11 +25,21 @@
         :title="emojiView.title"
         class="emoji-mart-emoji"
         :class="activeClass(emojiObject)"
-        @mouseenter="emojiProps.onEnter(emojiView.getEmoji())"
-        @mouseleave="emojiProps.onLeave(emojiView.getEmoji())"
+        @mouseenter="onEnter($event, emojiObject, emojiView)"
+        @mouseleave="onLeave($event, emojiObject, emojiView)"
         @click="emojiProps.onClick(emojiView.getEmoji())"
       >
-        <span :class="emojiView.cssClass" :style="emojiView.cssStyle">{{
+        <img
+          v-if="showExternalEmoji && emojiObject._data.has_img_external"
+          :src="showExternalAll ? emojiObject._data.externalUrl : transparentPixel"
+          :class="emojiView.cssClass"
+          :style="emojiView.cssStyle"
+          class="emoji-type-external"
+          @load="onLoad"
+          @error="onError"
+          loading="lazy"
+        />
+        <span v-else :class="emojiView.cssClass" :style="emojiView.cssStyle">{{
           emojiView.content
         }}</span>
       </button>
@@ -49,7 +59,7 @@
 </template>
 
 <script>
-import { EmojiView } from '../utils/emoji-data'
+import { EmojiView, transparentPixel } from '../utils/emoji-data'
 import Emoji from './Emoji.vue'
 
 export default {
@@ -77,8 +87,46 @@ export default {
       type: Object,
       required: true,
     },
+    externalPicker: {
+      type: String,
+      required: true,
+    }
+  },
+  data() {
+    return {
+      transparentPixel,
+    }
   },
   methods: {
+    onEnter(event, emojiObject, emojiView) {
+      this.emojiProps.onEnter(emojiView.getEmoji())
+      if (this.showExternalHover) {
+        const el = event.target.querySelector('img.emoji-type-external');
+        if (el) {
+          el.src = emojiObject._data.externalUrl;
+          el.style.backgroundImage = null;
+        }
+      }
+    },
+    onLeave(event, emojiObject, emojiView) {
+      this.emojiProps.onLeave(emojiView.getEmoji())
+      if (this.showExternalHover) {
+        const el = event.target.querySelector('img.emoji-type-external');
+        if (el) {
+          el.src = this.transparentPixel;
+          el.style.backgroundImage = null;
+        }
+      }
+    },
+    onLoad(event){
+      if (event.target.src !== this.transparentPixel) {
+        event.target.style.backgroundImage = 'unset';
+      }
+    },
+    onError(event) {
+      event.target.src = this.transparentPixel;
+      event.target.style.backgroundImage = null;
+    },
     activeClass: function(emojiObject) {
       if (!this.emojiProps.selectedEmoji) {
         return ''
@@ -96,6 +144,15 @@ export default {
     },
   },
   computed: {
+    showExternalAll() {
+      return this.externalPicker === 'all'
+    },
+    showExternalHover() {
+      return this.externalPicker === 'hover'
+    },
+    showExternalEmoji() {
+      return this.emojiProps.externalEnabled && (this.showExternalAll || this.showExternalHover)
+    },
     isVisible() {
       return !!this.emojis
     },
@@ -116,6 +173,7 @@ export default {
           this.emojiProps.fallback,
           this.emojiProps.emojiTooltip,
           this.emojiProps.emojiSize,
+          this.emojiProps.externalEnabled,
         )
         return { emojiObject, emojiView }
       })

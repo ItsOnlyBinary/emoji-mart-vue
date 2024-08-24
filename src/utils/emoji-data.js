@@ -117,9 +117,11 @@ export class EmojiIndex {
       custom,
       recent,
       recentLength = 20,
+      externalEmojis,
+      externalUrl,
     } = {},
   ) {
-    this._data = uncompress(data)
+    this._data = uncompress(data, externalEmojis, externalUrl)
     // Callback to exclude specific emojis
     this._emojisFilter = emojisToShowFilter || null
     // Categories to include / exclude
@@ -552,8 +554,6 @@ export class EmojiView {
       cssStyle = {
         backgroundImage: 'url(' + this.getEmoji()._data.imageUrl + ')',
         backgroundSize: '100%',
-        width: emojiSize + 'px',
-        height: emojiSize + 'px',
       }
     } else if (this._hasEmoji() && !this._isNative()) {
       cssStyle = {
@@ -673,3 +673,5 @@ export function sanitize(emoji) {
     native: unifiedToNative(unified),
   }
 }
+
+export const transparentPixel = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='

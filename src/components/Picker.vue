@@ -60,6 +60,7 @@
           :name="category.name"
           :emojis="category.emojis"
           :emoji-props="emojiProps"
+          :external-picker="externalPicker"
         />
       </div>
     </div>
@@ -129,6 +130,14 @@ export default {
       type: Object,
       required: true,
     },
+    externalEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    externalPicker: {
+      type: String,
+      default: 'none',
+    }
   },
   emits: ['select', 'skin-change'],
   data() {
@@ -156,6 +165,7 @@ export default {
         onEnter: this.onEmojiEnter.bind(this),
         onLeave: this.onEmojiLeave.bind(this),
         onClick: this.onEmojiClick.bind(this),
+        externalEnabled: this.externalEnabled,
       }
     },
     skinProps() {

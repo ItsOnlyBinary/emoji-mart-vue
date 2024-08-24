@@ -54,7 +54,20 @@ function deepFreeze(object) {
   return Object.freeze(object)
 }
 
-const uncompress = (data) => {
+function checkExternals(emoji, externalEmojis, externalUrl) {
+  if(!externalEmojis) {
+    return;
+  }
+  if (externalEmojis[emoji.unified]) {
+    const codepoint = emoji.unified.toLowerCase().replace(/-/g, '_')
+    emoji.has_img_external = true
+    emoji.externalUrl = externalUrl
+      .replace('%CODEPOINT%', codepoint)
+      .replace('%UNIFIED%', emoji.unified);
+  }
+}
+
+const uncompress = (data, externalEmojis, externalUrl) => {
   if (!data.compressed) {
     return data
   }
@@ -80,6 +93,15 @@ const uncompress = (data) => {
     if (!emoji.added_in) emoji.added_in = 6
     emoji.added_in = emoji.added_in.toFixed(1)
 
+    if (emoji.skin_variations) {
+      for (let skinId in emoji.skin_variations) {
+        let skin = emoji.skin_variations[skinId];
+        delete skin.image
+        checkExternals(emoji, externalEmojis, externalUrl);
+      }
+    }
+
+    checkExternals(emoji, externalEmojis, externalUrl);
     emoji.search = buildSearch(emoji)
   }
   data = deepFreeze(data)

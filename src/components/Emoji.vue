@@ -10,7 +10,17 @@
     @mouseleave="onMouseLeave"
     @click="onClick"
   >
-    <span :class="view.cssClass" :style="view.cssStyle">{{
+    <img
+      v-if="externalEnabled && emojiObject._data.has_img_external"
+      ref="externalEmoji"
+      :class="view.cssClass"
+      :style="view.cssStyle"
+      class="emoji-type-external"
+      @load="onLoad"
+      @error="onError"
+      loading="lazy"
+    />
+    <span v-else :class="view.cssClass" :style="view.cssStyle">{{
       view.content
     }}</span>
   </component>
@@ -18,7 +28,7 @@
 
 <script>
 import { EmojiProps } from '../utils/shared-props'
-import { EmojiView } from '../utils/emoji-data'
+import { EmojiView, transparentPixel } from '../utils/emoji-data'
 
 export default {
   props: {
@@ -27,9 +37,16 @@ export default {
       type: Object,
       required: true,
     },
+    externalEnabled: {
+      type: Boolean,
+      default: false,
+    },
   },
   emits: ["click", "mouseenter", "mouseleave"],
   computed: {
+    externalUrl() {
+      return this.emojiObject._data.externalUrl
+    },
     view() {
       return new EmojiView(
         this.emojiObject,
@@ -39,6 +56,7 @@ export default {
         this.fallback,
         this.tooltip,
         this.size,
+        this.externalEnabled,
       )
     },
     sanitizedData() {
@@ -55,7 +73,12 @@ export default {
       }
     },
   },
-  created() {},
+  watch: {
+    externalUrl: 'externalUrlHandler',
+  },
+  mounted() {
+    this.externalUrlHandler()
+  },
   methods: {
     onClick() {
       this.$emit('click', this.emojiObject)
@@ -66,6 +89,29 @@ export default {
     onMouseLeave() {
       this.$emit('mouseleave', this.emojiObject)
     },
+    onLoad(event) {
+      if (event.target.src !== transparentPixel) {
+        event.target.style.backgroundImage = 'unset'
+      }
+    },
+    onError(event) {
+      event.target.src = transparentPixel
+      event.target.style.backgroundImage = null
+    },
+    externalUrlHandler() {
+      if (!this.externalUrl) {
+        return;
+      }
+      this.$nextTick(() => {
+        if (!this.$refs.externalEmoji) {
+          return
+        }
+        const emojiEl = this.$refs.externalEmoji;
+        emojiEl.src = transparentPixel
+        emojiEl.style.backgroundImage = null
+        this.$nextTick(() => (emojiEl.src = this.externalUrl))
+      })
+    }
   },
 }
 </script>

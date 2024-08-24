@@ -9,6 +9,7 @@
           :native="emojiProps.native"
           :skin="emojiProps.skin"
           :set="emojiProps.set"
+          :external-enabled="emojiProps.externalEnabled"
         />
       </div>
 
@@ -31,6 +32,7 @@
         :native="emojiProps.native"
         :skin="emojiProps.skin"
         :set="emojiProps.set"
+        :external-enabled="emojiProps.externalEnabled"
       />
     </div>
 
